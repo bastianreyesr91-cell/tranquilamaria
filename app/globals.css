@@ -346,3 +346,36 @@ body {
       color: #e2e8f0;
       border: 1px solid #334155;
 }
+
+.card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+}
+
+.credit-card-item {
+      background: #1e293b;
+      border-radius: 10px;
+      padding: 16px;
+}
+
+.credit-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+}
+
+.progress-bar {
+      background: #334155;
+      border-radius: 999px;
+      height: 8px;
+      overflow: hidden;
+      margin: 10px 0;
+}
+
+.progress-fill {
+      height: 100%;
+      border-radius: 999px;
+}
