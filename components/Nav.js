@@ -16,6 +16,7 @@ export default function Nav() {
       { href: '/dashboard', label: 'Resumen' },
       { href: '/movimientos', label: 'Movimientos' },
       { href: '/tarjetas', label: 'Tarjetas' },
+        { href: '/presupuesto', label: 'Presupuesto' },
       { href: '/importar', label: 'Importar' },
         ];
 
