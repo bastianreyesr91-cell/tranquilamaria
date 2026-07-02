@@ -2,81 +2,89 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Nav from '../../components/Nav';
 
 export default function DashboardPage() {
-    const router = useRouter();
-    const [data, setData] = useState(null);
-    const [error, setError] = useState('');
+      const router = useRouter();
+      const [data, setData] = useState(null);
+      const [error, setError] = useState('');
 
   useEffect(() => {
-        fetch('/api/dashboard')
-          .then(async (res) => {
-                    if (res.status === 401) {
-                                router.push('/login');
-                                return;
-                    }
-                    const json = await res.json();
-                    if (!res.ok) {
-                                setError(json.error || 'Error al cargar');
-                                return;
-                    }
-                    setData(json);
-          })
-          .catch(() => setError('Error de conexion'));
+          fetch('/api/dashboard')
+            .then(async (res) => {
+                        if (res.status === 401) {
+                                      router.push('/login');
+                                      return;
+                        }
+                        const json = await res.json();
+                        if (!res.ok) {
+                                      setError(json.error || 'Error al cargar');
+                                      return;
+                        }
+                        setData(json);
+            })
+            .catch(() => setError('Error de conexion'));
   }, [router]);
 
-  async function handleLogout() {
-        await fetch('/api/auth/logout', { method: 'POST' });
-        router.push('/login');
+  const formatCLP = (n) =>
+          new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(n);
+
+  if (error) {
+          return (
+                    <main className="center">
+                      <Nav />
+                      <p className="error">{error}</p>
+              </main>
+          );
   }
 
-  const formatCLP = (n) =>
-        new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(n);
-
-  if (error) return <main className="center"><p className="error">{error}</p></main>;
-    if (!data) return <main className="center"><p>Cargando...</p></main>;
+  if (!data) {
+          return (
+                    <main className="center">
+                      <Nav />
+                      <p>Cargando...</p>
+              </main>
+          );
+  }
 
   return (
-        <main className="dashboard">
-          <header>
-            <div>
-              <h1>Hola, {data.name.split(' ')[0]}</h1>
-          <p className="subtitle">{data.email}</p>
-  </div>
-        <button onClick={handleLogout} className="logout">Cerrar sesion</button>
-  </header>
+          <main className="dashboard">
+            <Nav />
+            <h1>Hola, {data.name}</h1>
 
-      <section className="summary-cards">
-          <div className="card income">
-            <span>Ingresos del mes</span>
-          <strong>{formatCLP(data.income)}</strong>
-  </div>
-        <div className="card expense">
-            <span>Gastos del mes</span>
-          <strong>{formatCLP(data.expense)}</strong>
-  </div>
-        <div className="card balance">
-            <span>Balance</span>
-          <strong>{formatCLP(data.income - data.expense)}</strong>
-  </div>
-  </section>
+      <div className="summary-cards">
+              <div className="card income">
+                <span>Ingresos</span>
+              <strong>{formatCLP(data.income)}</strong>
+      </div>
+            <div className="card expense">
+                <span>Gastos</span>
+              <strong>{formatCLP(data.expense)}</strong>
+      </div>
+            <div className="card balance">
+                <span>Balance</span>
+              <strong>{formatCLP(data.income - data.expense)}</strong>
+    </div>
+    </div>
 
-      <section className="recent">
-          <h2>Movimientos recientes</h2>
+      <div className="recent">
+            <h2>Movimientos recientes</h2>
         <ul>
-{data.recent.map((t, i) => (
-              <li key={i}>
-                <span>{t.description}</span>
-                               <span className={t.amount < 0 ? 'neg' : 'pos'}>{formatCLP(t.amount)}</span>
-                                 </li>
-                                           ))}
+{(data.recent || []).map((t) => (
+                <li key={t.id}>
+                  <span>{t.description}</span>
+                                       <span className={t.amount < 0 ? 'neg' : 'pos'}>{formatCLP(t.amount)}</span>
+                                           </li>
+                                                     ))}
 </ul>
-                                 </section>
+                                                   <Link href="/movimientos">Ver todos los movimientos</Link>
+                                           </div>
 
-                                       <p className="notice">
-                                         Esta es una version inicial. Tarjetas, creditos, presupuestos y metas llegaran en la proxima etapa.
-                                 </p>
-                                 </main>
-                                   );
-                                 }
-                                 
+                                                 <p className="notice">
+            Esta es una version inicial de Tranquilamaria. Estamos agregando mas funciones proximamente:
+            tarjetas de credito, creditos, presupuesto, metas de ahorro y educacion financiera.
+                         </p>
+    </main>
+  );
+}
