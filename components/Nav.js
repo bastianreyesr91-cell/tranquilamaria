@@ -18,6 +18,7 @@ export default function Nav() {
       { href: '/tarjetas', label: 'Tarjetas' },
         { href: '/presupuesto', label: 'Presupuesto' },
       { href: '/importar', label: 'Importar' },
+        { href: '/perfil', label: 'Perfil' },
         ];
 
   return (
