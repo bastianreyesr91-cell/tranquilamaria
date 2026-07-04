@@ -83,7 +83,7 @@ async function handleSubmit(e) {
       } finally {
             setSaving(false);
       }
-                  }
+}
 
 async function handleDelete(id) {
       if (!confirm('Eliminar este movimiento?')) return;
@@ -125,7 +125,8 @@ return (
       <input type="text" placeholder="Descripcion" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
       <input type="number" placeholder="Monto" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} required />
       </div>
- <div className="form-row">
+
+<div className="form-row">
       <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
       <option value="EXPENSE">Gasto</option>
 <option value="INCOME">Ingreso</option>
@@ -175,6 +176,4 @@ return (
 )}
 </div>
 );
-});
-}
 }
