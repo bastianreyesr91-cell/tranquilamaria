@@ -342,7 +342,4 @@ onChange={(e) => setDepositAmounts((prev) => ({ ...prev, [g.id]: e.target.value 
 </section>
   </div>
 );
-}
-
-   }
-           
+    }
