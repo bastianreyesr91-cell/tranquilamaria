@@ -28,11 +28,44 @@ function normalize(s) {
     .trim();
 }
 
-function toISODate(str) {
-    const m = String(str || '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if (!m) return str;
-    const [, mm, dd, yyyy] = m;
-    return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+function excelSerialToISO(serial) {
+    const utcDays = Math.floor(serial - 25569);
+    const utcValue = utcDays * 86400;
+    const d = new Date(utcValue * 1000);
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
+function toISODate(val) {
+    if (typeof val === 'number') return excelSerialToISO(val);
+    const str = String(val || '').trim();
+    let m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (m) {
+        const [, mm, dd, yyyy] = m;
+        return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+    }
+    m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/);
+    if (m) {
+        const [, mm, dd, yy] = m;
+        return `20${yy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+    }
+    return str;
+}
+
+function isDateLike(val) {
+    if (typeof val === 'number') return val > 20000 && val < 60000;
+    const str = String(val || '').trim();
+    return /^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(str);
+}
+
+function parseMonto(val) {
+    if (typeof val === 'number') return val;
+    const str = String(val || '').replace(/[^0-9.,-]/g, '').trim();
+    if (!str) return NaN;
+    const cleaned = str.replace(/,/g, '');
+    return parseFloat(cleaned);
 }
 
 function parseEstadoCuenta(matrix) {
@@ -59,8 +92,7 @@ for (let i = 0; i < matrix.length; i++) {
 
 if (headerIdx === -1) return [];
 
-const dateRe = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
-    const rows = [];
+const rows = [];
 
 for (let i = headerIdx + 1; i < matrix.length; i++) {
     const row = matrix[i] || [];
@@ -72,19 +104,18 @@ for (let i = headerIdx + 1; i < matrix.length; i++) {
         continue;
     }
 
-    const fecha = String(row[colFecha] || '').trim();
+    const fechaVal = row[colFecha];
     const desc = String(row[colDesc] || '').trim();
-    const montoRaw = String(row[colMonto] || '').trim();
 
-    if (!dateRe.test(fecha) || !desc) continue;
+    if (!isDateLike(fechaVal) || !desc) continue;
     if (normalize(desc) === 'monto cancelado') continue;
 
-    const amount = parseFloat(montoRaw.replace(/\./g, '').replace(',', '.'));
+    const amount = parseMonto(row[colMonto]);
     if (Number.isNaN(amount)) continue;
 
     const lugar = String(row[colLugar] || '').trim();
     rows.push({
-        date: toISODate(fecha),
+        date: toISODate(fechaVal),
         description: desc,
         amount: String(-Math.abs(amount)),
         merchant: lugar,
@@ -116,7 +147,7 @@ function handleFile(e) {
                 const workbook = XLSX.read(data, { type: 'array' });
                 const sheetName = workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
-                const matrix = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' });
+                const matrix = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: '' });
                 const parsed = parseEstadoCuenta(matrix);
                 if (parsed.length === 0) {
                     setError('No se encontraron movimientos reconocibles en este archivo. Revisa que sea un estado de cuenta con el detalle de operaciones.');
