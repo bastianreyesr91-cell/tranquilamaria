@@ -672,3 +672,59 @@ body {
                 text-align: center;
     }
 }
+
+
+.edit-btn {
+    background: transparent;
+    color: #60a5fa;
+    border: 1px solid #60a5fa;
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    margin-right: 8px;
+}
+
+.edit-btn:hover {
+    background: #60a5fa;
+    color: #0f172a;
+}
+
+.save-btn {
+    background: #4ade80;
+    color: #0f172a;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    margin-right: 8px;
+}
+
+.save-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.cancel-btn {
+    background: transparent;
+    color: #94a3b8;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.tx-table td input,
+.tx-table td select {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    padding: 6px 8px;
+    color: #e2e8f0;
+    font-size: 13px;
+    width: 100%;
+    min-width: 100px;
+}
