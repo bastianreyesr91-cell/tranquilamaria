@@ -30,6 +30,16 @@ export default function MovimientosPage() {
             merchant: '',
       });
       const [saving, setSaving] = useState(false);
+      const [editingId, setEditingId] = useState(null);
+      const [editForm, setEditForm] = useState({
+            date: '',
+            description: '',
+            amount: '',
+            type: 'EXPENSE',
+            category: '',
+            merchant: '',
+      });
+      const [editSaving, setEditSaving] = useState(false);
 
 async function load() {
       setLoading(true);
@@ -97,6 +107,48 @@ async function handleDelete(id) {
       }
 }
 
+function startEdit(t) {
+      setEditingId(t.id);
+      setEditForm({
+            date: new Date(t.date).toISOString().slice(0, 10),
+            description: t.description,
+            amount: String(Math.abs(t.amount)),
+            type: Number(t.amount) < 0 ? 'EXPENSE' : 'INCOME',
+            category: t.category || '',
+            merchant: t.merchant || '',
+      });
+      setError('');
+}
+
+function cancelEdit() {
+      setEditingId(null);
+}
+
+async function handleEditSave(id) {
+      setEditSaving(true);
+      setError('');
+      try {
+            const amountNum = Number(editForm.amount);
+            const signedAmount = editForm.type === 'EXPENSE' ? -Math.abs(amountNum) : Math.abs(amountNum);
+            const res = await fetch(`/api/transactions/${id}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ ...editForm, amount: signedAmount }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                  setError(data.error || 'Error al actualizar movimiento');
+            } else {
+setEditingId(null);
+                  load();
+            }
+      } catch (e) {
+            setError('Error de conexion');
+      } finally {
+            setEditSaving(false);
+      }
+}
+
 const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
 return (
@@ -159,21 +211,50 @@ return (
        </thead>
  <tbody>
  {items.map((t) => (
-       <tr key={t.id}>
-<td>{formatDate(t.date)}</td>
-            <td>{t.description}</td>
-            <td>
-       <span className="badge" style={{ background: categoryColor(t.category), color: '#0f172a' }}>
-            {categoryIcon(t.category)} {categoryLabel(t.category)}
+       editingId === t.id ? (
+             <tr key={t.id}>
+<td><input type="date" value={editForm.date} onChange={(e) => setEditForm({ ...editForm, date: e.target.value })} /></td>
+       <td><input type="text" value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} /></td>
+       <td>
+       <select value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}>
+      <option value="">Auto-categorizar</option>
+{Object.keys(CATEGORY_LABELS).map((key) => (
+      <option key={key} value={key}>{categoryIcon(key)} {categoryLabel(key)}</option>
+                                  ))}
+</select>
+      </td>
+<td>
+      <select value={editForm.type} onChange={(e) => setEditForm({ ...editForm, type: e.target.value })}>
+      <option value="EXPENSE">Gasto</option>
+<option value="INCOME">Ingreso</option>
+      </select>
+<input type="number" value={editForm.amount} onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })} />
+      </td>
+<td>
+      <button className="save-btn" disabled={editSaving} onClick={() => handleEditSave(t.id)}>{editSaving ? 'Guardando...' : 'Guardar'}</button>
+<button className="cancel-btn" onClick={cancelEdit}>Cancelar</button>
+      </td>
+      </tr>
+) : (
+      <tr key={t.id}>
+      <td>{formatDate(t.date)}</td>
+<td>{t.description}</td>
+<td>
+      <span className="badge" style={{ background: categoryColor(t.category), color: '#0f172a' }}>
+{categoryIcon(t.category)} {categoryLabel(t.category)}
 </span>
       </td>
 <td className={t.amount < 0 ? 'neg' : 'pos'}>{formatCLP(t.amount)}</td>
-<td><button className="delete-btn" onClick={() => handleDelete(t.id)}>Eliminar</button></td>
+<td>
+      <button className="edit-btn" onClick={() => startEdit(t)}>Editar</button>
+<button className="delete-btn" onClick={() => handleDelete(t.id)}>Eliminar</button>
+      </td>
       </tr>
-))}
-      </tbody>
+)
+      ))}
+</tbody>
       </table>
 )}
 </div>
-);
+      );
 }
