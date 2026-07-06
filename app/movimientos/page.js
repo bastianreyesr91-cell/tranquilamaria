@@ -39,6 +39,7 @@ export default function MovimientosPage() {
             category: '',
             merchant: '',
       });
+      const [editError, setEditError] = useState('');
       const [editSaving, setEditSaving] = useState(false);
 
 async function load() {
@@ -117,33 +118,35 @@ function startEdit(t) {
             category: t.category || '',
             merchant: t.merchant || '',
       });
-      setError('');
+      setEditError('');
 }
 
 function cancelEdit() {
       setEditingId(null);
+      setEditError('');
 }
 
-async function handleEditSave(id) {
+async function handleEditSave(e) {
+      e.preventDefault();
       setEditSaving(true);
-      setError('');
+      setEditError('');
       try {
             const amountNum = Number(editForm.amount);
             const signedAmount = editForm.type === 'EXPENSE' ? -Math.abs(amountNum) : Math.abs(amountNum);
-            const res = await fetch(`/api/transactions/${id}`, {
+            const res = await fetch(`/api/transactions/${editingId}`, {
                   method: 'PUT',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ ...editForm, amount: signedAmount }),
             });
             const data = await res.json();
             if (!res.ok) {
-                  setError(data.error || 'Error al actualizar movimiento');
+                  setEditError(data.error || 'Error al actualizar movimiento');
             } else {
-setEditingId(null);
+                  setEditingId(null);
                   load();
             }
       } catch (e) {
-            setError('Error de conexion');
+            setEditError('Error de conexion');
       } finally {
             setEditSaving(false);
       }
@@ -211,50 +214,71 @@ return (
        </thead>
  <tbody>
  {items.map((t) => (
-       editingId === t.id ? (
-             <tr key={t.id}>
-<td><input type="date" value={editForm.date} onChange={(e) => setEditForm({ ...editForm, date: e.target.value })} /></td>
-       <td><input type="text" value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} /></td>
-       <td>
-       <select value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}>
-      <option value="">Auto-categorizar</option>
-{Object.keys(CATEGORY_LABELS).map((key) => (
-      <option key={key} value={key}>{categoryIcon(key)} {categoryLabel(key)}</option>
-                                  ))}
-</select>
-      </td>
-<td>
-      <select value={editForm.type} onChange={(e) => setEditForm({ ...editForm, type: e.target.value })}>
-      <option value="EXPENSE">Gasto</option>
-<option value="INCOME">Ingreso</option>
-      </select>
-<input type="number" value={editForm.amount} onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })} />
-      </td>
-<td>
-      <button className="save-btn" disabled={editSaving} onClick={() => handleEditSave(t.id)}>{editSaving ? 'Guardando...' : 'Guardar'}</button>
-<button className="cancel-btn" onClick={cancelEdit}>Cancelar</button>
-      </td>
-      </tr>
-) : (
-      <tr key={t.id}>
-      <td>{formatDate(t.date)}</td>
-<td>{t.description}</td>
-<td>
-      <span className="badge" style={{ background: categoryColor(t.category), color: '#0f172a' }}>
-{categoryIcon(t.category)} {categoryLabel(t.category)}
+       <tr key={t.id}>
+<td>{formatDate(t.date)}</td>
+            <td>{t.description}</td>
+            <td>
+       <span className="badge" style={{ background: categoryColor(t.category), color: '#0f172a' }}>
+            {categoryIcon(t.category)} {categoryLabel(t.category)}
 </span>
       </td>
 <td className={t.amount < 0 ? 'neg' : 'pos'}>{formatCLP(t.amount)}</td>
 <td>
       <button className="edit-btn" onClick={() => startEdit(t)}>Editar</button>
-<button className="delete-btn" onClick={() => handleDelete(t.id)}>Eliminar</button>
+      <button className="delete-btn" onClick={() => handleDelete(t.id)}>Eliminar</button>
       </td>
       </tr>
-)
-      ))}
-</tbody>
+))}
+      </tbody>
       </table>
 )}
+
+{editingId && (
+      <div className="modal-overlay" onClick={cancelEdit}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+<h3>Editar movimiento</h3>
+<form onSubmit={handleEditSave}>
+{editError && <div className="error">{editError}</div>}
+<label>
+      <span>Fecha</span>
+<input type="date" value={editForm.date} onChange={(e) => setEditForm({ ...editForm, date: e.target.value })} required />
+      </label>
+<label>
+      <span>Descripcion</span>
+<input type="text" value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} required />
+      </label>
+<label>
+      <span>Tipo</span>
+<select value={editForm.type} onChange={(e) => setEditForm({ ...editForm, type: e.target.value })}>
+      <option value="EXPENSE">Gasto</option>
+<option value="INCOME">Ingreso</option>
+      </select>
+      </label>
+<label>
+      <span>Monto</span>
+<input type="number" value={editForm.amount} onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })} required />
+      </label>
+<label>
+      <span>Categoria</span>
+<select value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}>
+      <option value="">Auto-categorizar</option>
+{Object.keys(CATEGORY_LABELS).map((key) => (
+      <option key={key} value={key}>{categoryIcon(key)} {categoryLabel(key)}</option>
+                                  ))}
+</select>
+      </label>
+<label>
+      <span>Comercio (opcional)</span>
+<input type="text" value={editForm.merchant} onChange={(e) => setEditForm({ ...editForm, merchant: e.target.value })} />
+      </label>
+<div className="modal-actions">
+      <button type="submit" disabled={editSaving}>{editSaving ? 'Guardando...' : 'Guardar'}</button>
+<button type="button" className="cancel-btn" onClick={cancelEdit}>Cancelar</button>
+      </div>
+      </form>
+      </div>
+      </div>
+)}
 </div>
-      );
+);
 }
