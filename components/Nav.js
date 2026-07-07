@@ -15,6 +15,7 @@ export default function Nav() {
   const links = [
       { href: '/dashboard', label: 'Resumen' },
       { href: '/movimientos', label: 'Movimientos' },
+        { href: '/cuentas', label: 'Cuentas' },
       { href: '/tarjetas', label: 'Tarjetas' },
         { href: '/presupuesto', label: 'Presupuesto' },
       { href: '/importar', label: 'Importar' },
