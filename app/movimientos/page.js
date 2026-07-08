@@ -19,6 +19,7 @@ export default function MovimientosPage() {
       const [month, setMonth] = useState(now.getMonth() + 1);
       const [year, setYear] = useState(now.getFullYear());
       const [items, setItems] = useState([]);
+      const [accounts, setAccounts] = useState([]);
       const [loading, setLoading] = useState(true);
       const [error, setError] = useState('');
       const [form, setForm] = useState({
@@ -28,6 +29,7 @@ export default function MovimientosPage() {
             type: 'EXPENSE',
             category: '',
             merchant: '',
+            accountId: '',
       });
       const [saving, setSaving] = useState(false);
       const [editingId, setEditingId] = useState(null);
@@ -38,6 +40,7 @@ export default function MovimientosPage() {
             type: 'EXPENSE',
             category: '',
             merchant: '',
+            accountId: '',
       });
       const [editError, setEditError] = useState('');
       const [editSaving, setEditSaving] = useState(false);
@@ -63,12 +66,30 @@ async function load() {
       } finally {
             setLoading(false);
       }
+
+      async function loadAccounts() {
+            try {
+                  const res = await fetch('/api/accounts');
+                  if (res.status === 401) return;
+                  const data = await res.json();
+                  setAccounts(Array.isArray(data) ? data : []);
+            } catch (e) {
+                  // ignore
+            }
+      }
+      
 }
 
 useEffect(() => {
       load();
       // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [month, year]);
+
+      useEffect(() => {
+            loadAccounts();
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, []);
+      
 
 async function handleSubmit(e) {
       e.preventDefault();
@@ -86,7 +107,7 @@ async function handleSubmit(e) {
             if (!res.ok) {
                   setError(data.error || 'Error al crear movimiento');
             } else {
-                  setForm({ date: new Date().toISOString().slice(0, 10), description: '', amount: '', type: 'EXPENSE', category: '', merchant: '' });
+                  setForm({ date: new Date().toISOString().slice(0, 10), description: '', amount: '', type: 'EXPENSE', category: '', merchant: '', accountId: '' });
                   load();
             }
       } catch (e) {
@@ -117,6 +138,7 @@ function startEdit(t) {
             type: Number(t.amount) < 0 ? 'EXPENSE' : 'INCOME',
             category: t.category || '',
             merchant: t.merchant || '',
+            accountId: t.account_id || '',
       });
       setEditError('');
 }
@@ -193,6 +215,12 @@ return (
                                   ))}
 </select>
 <input type="text" placeholder="Comercio (opcional)" value={form.merchant} onChange={(e) => setForm({ ...form, merchant: e.target.value })} />
+      <select value={form.accountId} onChange={(e) => setForm({ ...form, accountId: e.target.value })}>
+      <option value="">Sin cuenta</option>
+{accounts.map((a) => (
+      <option key={a.id} value={a.id}>{a.name}</option>
+      ))}
+            </select>
       </div>
 <button type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Agregar'}</button>
       </form>
@@ -208,6 +236,7 @@ return (
        <th>Fecha</th>
  <th>Descripcion</th>
  <th>Categoria</th>
+       <th>Cuenta</th>
  <th>Monto</th>
  <th></th>
        </tr>
@@ -222,6 +251,7 @@ return (
             {categoryIcon(t.category)} {categoryLabel(t.category)}
 </span>
       </td>
+      <td>{accounts.find((a) => a.id === t.account_id)?.name || '-'}</td>
 <td className={t.amount < 0 ? 'neg' : 'pos'}>{formatCLP(t.amount)}</td>
 <td>
       <button className="edit-btn" onClick={() => startEdit(t)}>Editar</button>
@@ -271,6 +301,15 @@ return (
       <span>Comercio (opcional)</span>
 <input type="text" value={editForm.merchant} onChange={(e) => setEditForm({ ...editForm, merchant: e.target.value })} />
       </label>
+      <label>
+      <span>Cuenta</span>
+      <select value={editForm.accountId} onChange={(e) => setEditForm({ ...editForm, accountId: e.target.value })}>
+      <option value="">Sin cuenta</option>
+{accounts.map((a) => (
+      <option key={a.id} value={a.id}>{a.name}</option>
+      ))}
+            </select>
+            </label>
 <div className="modal-actions">
       <button type="submit" disabled={editSaving}>{editSaving ? 'Guardando...' : 'Guardar'}</button>
 <button type="button" className="cancel-btn" onClick={cancelEdit}>Cancelar</button>
