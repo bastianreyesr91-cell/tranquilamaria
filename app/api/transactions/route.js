@@ -34,7 +34,7 @@ export async function POST(req) {
     }
 
 const body = await req.json();
-    const { date, description, amount, type, category, merchant, accountId } = body;
+    const { date, description, amount, type, category, merchant, accountId, classification } = body;
 
 if (!date || !description || amount === undefined || !type) {
     return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 });
@@ -50,6 +50,7 @@ const supabase = getSupabase();
         p_category: category || null,
         p_merchant: merchant || null,
         p_account_id: accountId || null,
+                        p_classification: classification || null,
     });
 
 if (error) {
