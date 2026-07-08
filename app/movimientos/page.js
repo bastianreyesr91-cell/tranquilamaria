@@ -66,6 +66,7 @@ async function load() {
       } finally {
             setLoading(false);
       }
+}
 
       async function loadAccounts() {
             try {
@@ -78,7 +79,6 @@ async function load() {
             }
       }
       
-}
 
 useEffect(() => {
       load();
